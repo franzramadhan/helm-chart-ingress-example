@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+
+  db:
+    image: mysql:8
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    ports:
+       - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: testing123
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: test
+      MYSQL_PASSWORD: test
+    volumes:
+      - ./db:/docker-entrypoint-initdb.d/:ro
+    container_name: mysql
+  
+  app:
+    build: .
+    image: app:test
+    ports:
+       - "8080:8080"
+    environment:
+      DB_HOSTNAME: db
+      DB_PORT: 3306
+      DB_NAME: testdb
+      DB_TABLE_NAME: test_table
+      DB_USER: test
+      DB_PASSWORD: test
+    depends_on:
+      - "db"
+    container_name: app

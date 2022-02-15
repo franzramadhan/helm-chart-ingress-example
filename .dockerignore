@@ -1,0 +1,5 @@
+main
+*.pyc
+.idea/
+.vscode/
+*.tgz
