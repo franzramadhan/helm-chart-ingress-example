@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.serviceName }}-deployment
+  labels:
+    app: {{ .Values.app.serviceName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.app.serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.serviceName }}
+    spec:
+      initContainers:
+      - name: {{ .Values.db.serviceName }}-status
+        image: busybox:stable
+        command: ['sh', '-c', "until nc -vz {{ .Values.db.serviceName }}-service {{ .Values.db.servicePort }}; do echo waiting for {{ .Values.db.serviceName }}; sleep 2; done"]
+      containers:
+      - name: {{ .Values.app.serviceName }}
+        image: {{ .Values.app.image }}
+        imagePullPolicy: {{ .Values.app.imagePullPolicy }}
+        resources:
+          {{- toYaml .Values.app.resources | nindent 12 }}
+        ports:
+        - containerPort: {{ .Values.app.servicePort }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.app.serviceName }}-configmap
+        - secretRef:
+            name: {{ .Values.app.serviceName }}-secrets
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.app.livenessProbe.httpGet.path }}
+            port: {{ .Values.app.servicePort }}
+          initialDelaySeconds: {{ .Values.app.livenessProbe.httpGet.initialDelaySeconds }}
+          periodSeconds: {{ .Values.app.livenessProbe.httpGet.periodSeconds }}
+      restartPolicy: {{ .Values.app.restartPolicy }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.db.serviceName }}-deployment
+  labels:
+    app: {{ .Values.db.serviceName }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.db.serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.db.serviceName }}
+    spec:
+      containers:
+      - name: {{ .Values.db.serviceName }}
+        image: {{ .Values.db.image }}
+        imagePullPolicy: {{ .Values.db.imagePullPolicy }}
+        ports:
+        - containerPort: {{ .Values.db.servicePort }}
+        volumeMounts:
+        - name: initdb
+          mountPath: "/docker-entrypoint-initdb.d"
+          readOnly: true
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.db.serviceName }}-configmap
+        - secretRef:
+            name: {{ .Values.db.serviceName }}-secrets
+        resources:
+          {{- toYaml .Values.db.resources | nindent 12 }}
+        livenessProbe:
+          tcpSocket:
+            port: {{ .Values.db.servicePort }}
+          initialDelaySeconds: {{ .Values.db.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.db.livenessProbe.periodSeconds }}
+      restartPolicy: {{ .Values.db.restartPolicy }}
+      volumes:
+      - name: initdb
+        configMap:
+          name: {{ .Values.db.serviceName }}-configmap
+          items:
+          - key: "init.sql"
+            path: "init.sql"

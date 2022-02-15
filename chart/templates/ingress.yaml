@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: http-ingress
+spec:
+  ingressClassName: nginx
+  defaultBackend:
+    service:
+      name: {{ .Values.app.serviceName }}-service
+      port:
+        number: {{ .Values.app.servicePort }}
+  rules:
+  - http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: {{ .Values.app.serviceName }}-service
+            port:
+              number: {{ .Values.app.servicePort }}

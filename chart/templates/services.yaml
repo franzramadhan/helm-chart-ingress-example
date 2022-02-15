@@ -1,0 +1,26 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.app.serviceName }}-service
+spec:
+  selector:
+    app: {{ .Values.app.serviceName }}
+  ports:
+  - name: {{ .Values.app.serviceName }}
+    protocol: TCP
+    port: {{ .Values.app.servicePort }}
+    targetPort: {{ .Values.app.servicePort }}
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: {{ .Values.db.serviceName }}-service
+spec:
+  selector:
+    app: {{ .Values.db.serviceName }}
+  ports:
+  - name: {{ .Values.db.serviceName }}
+    protocol: TCP
+    port: {{ .Values.db.servicePort }}
+    targetPort: {{ .Values.db.servicePort }}
