@@ -3,3 +3,4 @@ main
 .idea/
 .vscode/
 *.tgz
+*.tar.gz
