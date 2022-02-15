@@ -18,7 +18,7 @@ services:
   
   app:
     build: .
-    image: app:test
+    image: franzramadhan/backend:latest
     ports:
        - "8080:8080"
     environment:
