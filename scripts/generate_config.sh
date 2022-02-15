@@ -26,39 +26,51 @@ metadata:
 data:
   MYSQL_DATABASE: ${db_name}
   init.sql: |
-    CREATE TABLE IF NOT EXISTS '${table_name}' (
-      'id' int(11) NOT NULL,   
-      'uid' varchar(36) NOT NULL,       
-      'coin_name' varchar(16)  NOT NULL default '',     
-      'acronym'  varchar(16)  NOT NULL default '',
-      'logo'  text  NOT NULL,   
-       PRIMARY KEY  ('id')
+    CREATE TABLE IF NOT EXISTS \`${table_name}\` (
+      \`id\` int(11) NOT NULL,   
+      \`uid\` varchar(36) NOT NULL,       
+      \`coin_name\` varchar(16)  NOT NULL default '',     
+      \`acronym\`  varchar(16)  NOT NULL default '',
+      \`logo\`  text  NOT NULL,   
+       PRIMARY KEY  (\`id\`)
     );
 
 EOF
 
 ## generate secrets
-cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: Secret
-metadata:
-  name: app-secrets
-  labels:
-    app: app
-type: Opaque
-data:
-  DB_USER: ${db_user}
-  DB_PASSWORD: ${db_password}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: db-secrets
-  labels:
-    app: db
-type: Opaque
-data:
-  MYSQL_ROOT_PASSWORD:  ${mysql_root_password}
-  MYSQL_USER: ${db_user}
-  MYSQL_PASSWORD: ${db_password}
-EOF
+
+kubectl create secret generic app-secrets \
+  --from-literal=DB_USER=${db_user} \
+  --from-literal=DB_PASSWORD=${db_password} \
+  2>&1 >/dev/null &
+
+kubectl create secret generic db-secrets \
+  --from-literal=MYSQL_USER=${db_user} \
+  --from-literal=MYSQL_PASSWORD=${db_password} \
+  --from-literal=MYSQL_ROOT_PASSWORD=${mysql_root_password} \
+  2>&1 >/dev/null &
+
+# cat <<EOF | kubectl apply -f -
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: app-secrets
+#   labels:
+#     app: app
+# type: Opaque
+# data:
+#   DB_USER: ${db_user}
+#   DB_PASSWORD: ${db_password}
+# ---
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: db-secrets
+#   labels:
+#     app: db
+# type: Opaque
+# data:
+#   MYSQL_ROOT_PASSWORD:  ${mysql_root_password}
+#   MYSQL_USER: ${db_user}
+#   MYSQL_PASSWORD: ${db_password}
+# EOF
